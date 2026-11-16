@@ -4,6 +4,7 @@ import 'package:just_audio_media_kit/just_audio_media_kit.dart';
 import 'package:just_audio_platform_interface/just_audio_platform_interface.dart';
 import 'package:logging/logging.dart';
 import 'package:media_kit/media_kit.dart';
+import 'package:just_audio_media_kit/src/error_classification.dart';
 import 'set_property.dart';
 
 /// An [AudioPlayerPlatform] which wraps `package:media_kit`'s [Player]
@@ -146,6 +147,16 @@ class MediaKitPlayer extends AudioPlayerPlatform {
         _updatePlaybackEvent();
       }),
       _player.stream.error.listen((error) {
+        // Recoverable media errors (e.g. "Error decoding audio."): mpv has
+        // already skipped the damaged packet and continues playing. Turning
+        // these into `idle` would make just_audio dispose the platform player
+        // and silence the rest of the track.
+        if (JustAudioMediaKit.ignoreDecodeErrors &&
+            isRecoverableMediaError(error)) {
+          _logger.warning(
+              'Recoverable media error (playback continues): $error');
+          return;
+        }
         final errorUri = RegExp(r'Failed to open (.*)\.').firstMatch(error)?[1];
         if (errorUri == null || errorUri == _currentMedia?.uri) {
           _processingState = ProcessingStateMessage.idle;

@@ -48,6 +48,15 @@ class JustAudioMediaKit extends JustAudioPlatform {
   /// [the related issue](https://github.com/Pato05/just_audio_media_kit/issues/11) for more information
   static bool prefetchPlaylist = false;
 
+  /// Whether `mpv` media decode errors (e.g. `Error decoding audio.`) are
+  /// treated as recoverable (defaults to `true`).
+  ///
+  /// `mpv` skips the damaged packet and keeps decoding the rest of the file;
+  /// when this is enabled the player is kept in its current state instead of
+  /// being marked as `idle` (which would make `just_audio` dispose the
+  /// platform player and stop playback).
+  static bool ignoreDecodeErrors = true;
+
   /// Path to PEM client certificate file for mTLS.
   static String? tlsCertFile;
 
